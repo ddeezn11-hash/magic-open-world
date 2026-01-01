@@ -1,12 +1,17 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Player and enemy
-const player = { x: 50, y: 50, size: 50, color: 'red', speed: 5 };
-const enemy = { x: 400, y: 300, size: 50, color: 'blue', speed: 2 };
+// Player and enemy setup
+const player = { x: 50, y: 50, size: 50, speed: 5 };
+const enemy = { x: 400, y: 300, size: 50, speed: 2, color: 'blue' };
 let score = 0;
 
+// Track key presses
 const keys = {};
+
+// Load player image
+const playerImage = new Image();
+playerImage.src = "assets/Friendly_gesture_of_a_stick_figure-removebg-preview.png";
 
 // Keyboard input
 window.addEventListener('keydown', e => keys[e.key] = true);
@@ -22,6 +27,7 @@ function isColliding(a, b) {
 
 // Update game state
 function update() {
+  // Player movement
   if (keys['ArrowUp']) player.y -= player.speed;
   if (keys['ArrowDown']) player.y += player.speed;
   if (keys['ArrowLeft']) player.x -= player.speed;
@@ -31,7 +37,7 @@ function update() {
   player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
   player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
 
-  // Move enemy randomly
+  // Enemy moves randomly
   enemy.x += (Math.random() - 0.5) * enemy.speed * 2;
   enemy.y += (Math.random() - 0.5) * enemy.speed * 2;
   enemy.x = Math.max(0, Math.min(canvas.width - enemy.size, enemy.x));
@@ -54,16 +60,15 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Player
-  ctx.fillStyle = player.color;
-  ctx.fillRect(player.x, player.y, player.size, player.size);
+  // Draw player (stick figure)
+  ctx.drawImage(playerImage, player.x, player.y, player.size, player.size);
 
-  // Enemy
+  // Draw enemy cube
   ctx.fillStyle = enemy.color;
   ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
 }
 
-// Game loop
+// Main game loop
 function gameLoop() {
   update();
   draw();
@@ -71,4 +76,3 @@ function gameLoop() {
 }
 
 gameLoop();
-
