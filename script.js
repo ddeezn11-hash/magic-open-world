@@ -17,7 +17,7 @@ const TERRAIN = {
 // Sample map layout (0=grass, 1=water, 2=tree, 3=sand, 4=mountain)
 const map = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 0, 0, 0, 0, 2, 0, 0, 1, 1, 0, 0, 3, 3],
     [0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 3],
     [0, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 3, 3],
     [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 2, 0, 4, 4, 0],
@@ -58,9 +58,11 @@ function loadImages() {
         images[key].src = imageSources[key];
         images[key].onload = () => {
             loadedImages++;
+            console.log("Loaded image:", key, images[key].src); // Debugging
             if (loadedImages === totalImages) {
                 imagesLoaded = true;
                 console.log("All images loaded!");
+                console.log(images); // Inspect the images object
             }
         };
         images[key].onerror = () => {
@@ -78,8 +80,16 @@ function canMove(newX, newY) {
     const col = Math.floor(newX / TILE_SIZE);
     const row = Math.floor(newY / TILE_SIZE);
 
-    if (row < 0 || row >= MAP_ROWS || col < 0 || col >= MAP_COLS) return false;
+    console.log("canMove:", newX, newY, col, row); // Debugging
+
+    if (row < 0 || row >= MAP_ROWS || col < 0 || col >= MAP_COLS) {
+        console.log("Out of bounds!");
+        return false;
+    }
+
     const tile = map[row][col];
+    console.log("Tile type:", tile); // Debugging
+
     return tile === TERRAIN.GRASS || tile === TERRAIN.SAND; // walkable on grass and sand
 }
 
@@ -106,7 +116,7 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas each frame
 
     for (let row = 0; row < MAP_ROWS; row++) {
-        for (let col = 0; col < MAP_COLS; col) {
+        for (let col = 0; col < MAP_COLS; col++) {
             const tile = map[row][col];
             let img = null;
 
@@ -125,7 +135,11 @@ function draw() {
     }
 
     // Draw Player - No animation, just use the original player image
-    ctx.drawImage(images['player'], player.x, player.y, player.width, player.height);
+    if (images['player']) { // Check if the player image is loaded before drawing
+        ctx.drawImage(images['player'], player.x, player.y, player.width, player.height);
+    } else {
+        console.log("Player image not loaded yet!");
+    }
 }
 
 // Main loop
@@ -137,10 +151,12 @@ function gameLoop() {
 
 // Start game
 loadImages();
+
 // Wait for images to load before starting the game loop (moved inside loadImages success callback)
 let startCheckImagesLoaded = setInterval(() => {
     if (imagesLoaded) {
         clearInterval(startCheckImagesLoaded);
         gameLoop();
+        console.log("Game loop started!"); // Debugging
     }
 }, 100);
