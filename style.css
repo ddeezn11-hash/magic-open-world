@@ -14,7 +14,15 @@ body {
     background: rgba(255, 255, 255, 0.8);
     padding: 10px;
     border: 1px solid #ccc;
-    z-index: 1000; /* Ensure it's on top of the canvas */
+    z-index: 1000;
+}
+
+#editorPanelHeader {
+    background-color: #2196F3;
+    color: #fff;
+    cursor: move;
+    padding: 10px;
+    margin: -10px -10px 0 -10px; /* Adjust to fit panel padding */
 }
 
 #editorPanel label {
@@ -34,8 +42,8 @@ body {
     padding: 10px;
     border: 1px solid #ccc;
     z-index: 1000;
-    max-height: 400px; /* Limit height for scrollability */
-    overflow-y: auto; /* Enable vertical scroll if content overflows */
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 #mapEditor button {
@@ -44,12 +52,11 @@ body {
     margin: 2px;
     font-size: 16px;
     text-align: center;
-    line-height: 30px; /* Vertically center the text */
+    line-height: 30px;
     border: none;
     cursor: pointer;
 }
 
-/* Style buttons for each terrain type */
 .terrain-0 { background-color: lightgreen; } /* GRASS */
 .terrain-1 { background-color: lightblue; }  /* WATER */
 .terrain-2 { background-color: darkgreen; }  /* TREE */

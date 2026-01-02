@@ -64,7 +64,13 @@ function loadImages() {
     }
 }
 
-window.addEventListener('keydown', e => keys[e.key] = true);
+window.addEventListener('keydown', e => {
+    keys[e.key] = true;
+    if (e.key === '.') {
+        toggleEditorVisibility();
+    }
+});
+
 window.addEventListener('keyup', e => keys[e.key] = false);
 
 function canMove(newX, newY) {
@@ -167,6 +173,9 @@ function initializeEditor() {
     }
 
     canvas.addEventListener('click', handleCanvasClick);
+
+    // Make Editor Draggable
+    makeDraggable(document.getElementById('editorPanel'));
 }
 
 let selectedTerrain = 0;
@@ -205,12 +214,56 @@ function loadMap() {
     }
 }
 
+function toggleEditorVisibility() {
+    const editorPanel = document.getElementById('editorPanel');
+    if (editorPanel.style.display === 'none') {
+        editorPanel.style.display = 'block';
+    } else {
+        editorPanel.style.display = 'none';
+    }
+}
+
+function makeDraggable(element) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    const header = document.getElementById(element.id + "Header");
+    if (header) {
+        header.onmousedown = dragMouseDown;
+    } else {
+        element.onmousedown = dragMouseDown;
+    }
+
+    function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        element.style.top = (element.offsetTop - pos2) + "px";
+        element.style.left = (element.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+}
+
 loadImages();
 
 let startCheckImagesLoaded = setInterval(() => {
     if (imagesLoaded) {
         clearInterval(startCheckImagesLoaded);
-        loadMap();  // Load the map *after* images are loaded
+        loadMap();
         gameLoop();
     }
 }, 100);
