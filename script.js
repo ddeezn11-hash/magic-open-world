@@ -31,7 +31,7 @@ const map = [
 ];
 
 // Player object
-const player = { x: 0, y: 0, width: TILE_SIZE, height: TILE_SIZE, speed: 5, animationFrame: 0, animationSpeed: 10 };  // Added animation properties
+const player = { x: 0, y: 0, width: TILE_SIZE, height: TILE_SIZE, speed: 5 };
 
 // Key state
 const keys = {};
@@ -42,14 +42,12 @@ let imagesLoaded = false; // Flag to check if all images are loaded
 
 function loadImages() {
     const imageSources = {
-        'player': "assets/Friendly_gesture_of_a_stick_figure-removebg-preview.png",
+        'player': "assets/Friendly_gesture_of_a_stick_figure-removebg-preview.png",  // Main player image
         'grass': "assets/grass.png",
         'water': "assets/water.png",
         'tree': "assets/tree.png",
         'sand': "assets/sand.png", // Added sand image
-        'mountain': "assets/mountain.png", // Added mountain image
-        'player_walk1': "assets/player_walk1.png",  // Animation frames
-        'player_walk2': "assets/player_walk2.png"
+        'mountain': "assets/mountain.png" // Added mountain image
     };
 
     let loadedImages = 0;
@@ -91,24 +89,16 @@ function update() {
 
     let newX = player.x;
     let newY = player.y;
-    let moving = false;
 
-    if (keys['ArrowUp']) { newY -= player.speed; moving = true; }
-    if (keys['ArrowDown']) { newY += player.speed; moving = true; }
-    if (keys['ArrowLeft']) { newX -= player.speed; moving = true; }
-    if (keys['ArrowRight']) { newX += player.speed; moving = true; }
+    if (keys['ArrowUp']) newY -= player.speed;
+    if (keys['ArrowDown']) newY += player.speed;
+    if (keys['ArrowLeft']) newX -= player.speed;
+    if (keys['ArrowRight']) newX += player.speed;
 
     // Check hitboxes before moving
     if (canMove(newX, player.y)) player.x = newX;
     if (canMove(player.x, newY)) player.y = newY;
 
-    // Update animation frame
-    if (moving) {
-        player.animationFrame++;
-        if (player.animationFrame >= 2 * player.animationSpeed) {
-            player.animationFrame = 0;
-        }
-    }
 }
 
 // Draw map and player
@@ -116,7 +106,7 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas each frame
 
     for (let row = 0; row < MAP_ROWS; row++) {
-        for (let col = 0; col < MAP_COLS; col++) {
+        for (let col = 0; col < MAP_COLS; col) {
             const tile = map[row][col];
             let img = null;
 
@@ -134,11 +124,8 @@ function draw() {
         }
     }
 
-    // Draw Player with Animation
-    const animationIndex = Math.floor(player.animationFrame / player.animationSpeed);
-    const playerImage = (animationIndex === 0) ? images['player_walk1'] : images['player_walk2'];  // Alternate between animation frames
-
-    ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
+    // Draw Player - No animation, just use the original player image
+    ctx.drawImage(images['player'], player.x, player.y, player.width, player.height);
 }
 
 // Main loop
