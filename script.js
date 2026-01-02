@@ -21,7 +21,7 @@ let map = [
     [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 2, 0, 4, 4, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 4, 4, 0, 0],
     [0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 4, 4, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0],
+    [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
     [0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -54,7 +54,7 @@ function loadImages() {
             loadedImages++;
             if (loadedImages === totalImages) {
                 imagesLoaded = true;
-                initializeEditor(); // Call this after images are loaded
+                initializeEditor();
                 console.log("All images loaded!");
             }
         };
@@ -90,7 +90,6 @@ function update() {
     if (canMove(newX, player.y)) player.x = newX;
     if (canMove(player.x, newY)) player.y = newY;
 
-    //  *** KEY FIX: UPDATE EDITOR DISPLAY ONLY IF INPUT FIELD DOESN'T HAVE FOCUS ***
     if (document.activeElement.id !== 'playerX' && document.activeElement.id !== 'playerY' && document.activeElement.id !== 'playerSpeed') {
         document.getElementById('playerX').value = player.x;
         document.getElementById('playerY').value = player.y;
@@ -133,7 +132,6 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Editor Functions
 function initializeEditor() {
     // Player Editor
     document.getElementById('playerX').value = player.x;
@@ -150,13 +148,20 @@ function initializeEditor() {
         player.speed = parseInt(document.getElementById('playerSpeed').value);
     });
 
+    // Save/Load Buttons
+    const saveButton = document.getElementById('saveButton');
+    const loadButton = document.getElementById('loadButton');
+
+    saveButton.addEventListener('click', saveMap);
+    loadButton.addEventListener('click', loadMap);
+
     // Map Editor - Create Terrain Buttons
     const terrainButtonsDiv = document.getElementById('terrainButtons');
     for (const terrainName in TERRAIN) {
         const terrainValue = TERRAIN[terrainName];
         const button = document.createElement('button');
         button.textContent = terrainValue;
-        button.classList.add('terrain-' + terrainValue); // Add class for styling
+        button.classList.add('terrain-' + terrainValue);
         button.addEventListener('click', () => setSelectedTerrain(terrainValue));
         terrainButtonsDiv.appendChild(button);
     }
@@ -164,7 +169,7 @@ function initializeEditor() {
     canvas.addEventListener('click', handleCanvasClick);
 }
 
-let selectedTerrain = 0; // Default to GRASS
+let selectedTerrain = 0;
 
 function setSelectedTerrain(terrain) {
     selectedTerrain = terrain;
@@ -185,11 +190,27 @@ function handleCanvasClick(event) {
     }
 }
 
+function saveMap() {
+    localStorage.setItem('mapData', JSON.stringify(map));
+    console.log("Map saved to localStorage!");
+}
+
+function loadMap() {
+    const savedMapData = localStorage.getItem('mapData');
+    if (savedMapData) {
+        map = JSON.parse(savedMapData);
+        console.log("Map loaded from localStorage!");
+    } else {
+        console.log("No map data found in localStorage.");
+    }
+}
+
 loadImages();
 
 let startCheckImagesLoaded = setInterval(() => {
     if (imagesLoaded) {
         clearInterval(startCheckImagesLoaded);
+        loadMap();  // Load the map *after* images are loaded
         gameLoop();
     }
 }, 100);

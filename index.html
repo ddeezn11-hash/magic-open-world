@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tile Map</title>
-    <link rel="stylesheet" href="style.css">  <!-- Link to your CSS file -->
+    <title>Tile Map Editor</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 
-    <div id="editorPanel">  <!-- Editor Panel -->
+    <div id="editorPanel">
         <h2>Player Editor</h2>
         <label>X: <input type="number" id="playerX"></label>
         <label>Y: <input type="number" id="playerY"></label>
         <label>Speed: <input type="number" id="playerSpeed"></label>
+
+        <button id="saveButton">Save Map</button>
+        <button id="loadButton">Load Map</button>
     </div>
 
     <div id="mapEditor">
@@ -22,6 +25,6 @@
         </div>
     </div>
 
-    <script src="script.js"></script>  <!-- Your main JavaScript file -->
+    <script src="script.js"></script>
 </body>
 </html>
