@@ -1,78 +1,107 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Player and enemy setup
-const player = { x: 50, y: 50, size: 50, speed: 5 };
-const enemy = { x: 400, y: 300, size: 50, speed: 2, color: 'blue' };
-let score = 0;
+const TILE_SIZE = 50; // size of each tile
+const MAP_ROWS = 12;
+const MAP_COLS = 16;
 
-// Track key presses
+// Define terrain types
+const TERRAIN = {
+  GRASS: 0,
+  WATER: 1,
+  TREE: 2
+};
+
+// Sample map layout (0=grass, 1=water, 2=tree)
+const map = [
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,1,1,0,0,0,0,2,0,0,1,1,0,0,0,0],
+  [0,0,0,0,2,0,0,0,0,0,0,0,0,1,1,0],
+  [0,0,2,0,0,0,0,0,0,2,0,0,0,0,0,0],
+  [0,0,0,0,1,1,0,0,0,0,0,2,0,0,0,0],
+  [0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0],
+  [0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0],
+  [0,0,0,0,0,1,1,0,0,0,0,0,0,2,0,0],
+  [0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0],
+  [0,0,2,0,0,0,0,0,0,0,0,2,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+];
+
+// Player object
+const player = { x: 0, y: 0, width: TILE_SIZE, height: TILE_SIZE, speed: 5 };
+
+// Key state
 const keys = {};
 
-// Load player image
-const playerImage = new Image();
-playerImage.src = "assets/Friendly_gesture_of_a_stick_figure-removebg-preview.png";
+// Load images
+const images = {};
+function loadImages() {
+  images['player'] = new Image();
+  images['player'].src = "assets/Friendly_gesture_of_a_stick_figure-removebg-preview.png";
 
-// Keyboard input
+  images['grass'] = new Image();
+  images['grass'].src = "assets/grass.png";
+
+  images['water'] = new Image();
+  images['water'].src = "assets/water.png";
+
+  images['tree'] = new Image();
+  images['tree'].src = "assets/tree.png";
+}
+
+// Input events
 window.addEventListener('keydown', e => keys[e.key] = true);
 window.addEventListener('keyup', e => keys[e.key] = false);
 
-// Collision detection
-function isColliding(a, b) {
-  return a.x < b.x + b.size &&
-         a.x + a.size > b.x &&
-         a.y < b.y + b.size &&
-         a.y + a.size > b.y;
+// Collision check with terrain
+function canMove(newX, newY) {
+  const col = Math.floor(newX / TILE_SIZE);
+  const row = Math.floor(newY / TILE_SIZE);
+
+  if (row < 0 || row >= MAP_ROWS || col < 0 || col >= MAP_COLS) return false;
+  const tile = map[row][col];
+  return tile === TERRAIN.GRASS; // only walkable on grass
 }
 
-// Update game state
+// Update player position
 function update() {
-  // Player movement
-  if (keys['ArrowUp']) player.y -= player.speed;
-  if (keys['ArrowDown']) player.y += player.speed;
-  if (keys['ArrowLeft']) player.x -= player.speed;
-  if (keys['ArrowRight']) player.x += player.speed;
+  let newX = player.x;
+  let newY = player.y;
 
-  // Keep player in bounds
-  player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
-  player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
+  if (keys['ArrowUp']) newY -= player.speed;
+  if (keys['ArrowDown']) newY += player.speed;
+  if (keys['ArrowLeft']) newX -= player.speed;
+  if (keys['ArrowRight']) newX += player.speed;
 
-  // Enemy moves randomly
-  enemy.x += (Math.random() - 0.5) * enemy.speed * 2;
-  enemy.y += (Math.random() - 0.5) * enemy.speed * 2;
-  enemy.x = Math.max(0, Math.min(canvas.width - enemy.size, enemy.x));
-  enemy.y = Math.max(0, Math.min(canvas.height - enemy.size, enemy.y));
+  // Check hitboxes before moving
+  if (canMove(newX, player.y)) player.x = newX;
+  if (canMove(player.x, newY)) player.y = newY;
+}
 
-  // Check collision
-  if (isColliding(player, enemy)) {
-    alert(`Game Over! Your score: ${score}`);
-    score = 0;
-    player.x = 50;
-    player.y = 50;
+// Draw map and player
+function draw() {
+  for (let row = 0; row < MAP_ROWS; row++) {
+    for (let col = 0; col < MAP_COLS; col++) {
+      const tile = map[row][col];
+      let img;
+      if (tile === TERRAIN.GRASS) img = images['grass'];
+      if (tile === TERRAIN.WATER) img = images['water'];
+      if (tile === TERRAIN.TREE) img = images['tree'];
+      ctx.drawImage(img, col*TILE_SIZE, row*TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    }
   }
 
-  // Update score
-  score++;
-  document.getElementById('score').textContent = score;
+  ctx.drawImage(images['player'], player.x, player.y, player.width, player.height);
 }
 
-// Draw everything
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Draw player (stick figure)
-  ctx.drawImage(playerImage, player.x, player.y, player.size, player.size);
-
-  // Draw enemy cube
-  ctx.fillStyle = enemy.color;
-  ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
-}
-
-// Main game loop
+// Main loop
 function gameLoop() {
   update();
   draw();
   requestAnimationFrame(gameLoop);
 }
 
+// Start game
+loadImages();
 gameLoop();
