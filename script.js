@@ -90,10 +90,16 @@ function update() {
     if (canMove(newX, player.y)) player.x = newX;
     if (canMove(player.x, newY)) player.y = newY;
 
-    // Update editor panel values
-    document.getElementById('playerX').value = player.x;
-    document.getElementById('playerY').value = player.y;
-    document.getElementById('playerSpeed').value = player.speed;
+    //  *** KEY FIX: UPDATE EDITOR DISPLAY ONLY IF INPUT FIELD DOESN'T HAVE FOCUS ***
+    if (document.activeElement.id !== 'playerX' && document.activeElement.id !== 'playerY' && document.activeElement.id !== 'playerSpeed') {
+        document.getElementById('playerX').value = player.x;
+        document.getElementById('playerY').value = player.y;
+        document.getElementById('playerSpeed').value = player.speed;
+    } else {
+        console.log("Skipping editor update because an input field has focus.");
+    }
+
+    console.log("Player x:", player.x, "Player y:", player.y, "Player speed:", player.speed);
 }
 
 function draw() {
