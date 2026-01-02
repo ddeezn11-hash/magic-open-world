@@ -1,21 +1,19 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-const TILE_SIZE = 50; // size of each tile
+const TILE_SIZE = 50;
 const MAP_ROWS = 12;
 const MAP_COLS = 16;
 
-// Define terrain types
 const TERRAIN = {
     GRASS: 0,
     WATER: 1,
     TREE: 2,
-    SAND: 3, // Added SAND terrain
-    MOUNTAIN: 4 // Added MOUNTAIN terrain
+    SAND: 3,
+    MOUNTAIN: 4
 };
 
-// Sample map layout (0=grass, 1=water, 2=tree, 3=sand, 4=mountain)
-const map = [
+let map = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 1, 1, 0, 0, 0, 0, 2, 0, 0, 1, 1, 0, 0, 3, 3],
     [0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 3],
@@ -30,24 +28,20 @@ const map = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 ];
 
-// Player object
-const player = { x: 0, y: 0, width: TILE_SIZE, height: TILE_SIZE, speed: 5 };
+let player = { x: 0, y: 0, width: TILE_SIZE, height: TILE_SIZE, speed: 5 };
 
-// Key state
 const keys = {};
-
-// Load images
 const images = {};
-let imagesLoaded = false; // Flag to check if all images are loaded
+let imagesLoaded = false;
 
 function loadImages() {
     const imageSources = {
-        'player': "assets/Friendly_gesture_of_a_stick_figure-removebg-preview.png",  // Main player image
+        'player': "assets/Friendly_gesture_of_a_stick_figure-removebg-preview.png",
         'grass': "assets/grass.png",
         'water': "assets/water.png",
         'tree': "assets/tree.png",
-        'sand': "assets/sand.png", // Added sand image
-        'mountain': "assets/mountain.png" // Added mountain image
+        'sand': "assets/sand.png",
+        'mountain': "assets/mountain.png"
     };
 
     let loadedImages = 0;
@@ -58,11 +52,10 @@ function loadImages() {
         images[key].src = imageSources[key];
         images[key].onload = () => {
             loadedImages++;
-            console.log("Loaded image:", key, images[key].src); // Debugging
             if (loadedImages === totalImages) {
                 imagesLoaded = true;
+                initializeEditor(); // Call this after images are loaded
                 console.log("All images loaded!");
-                console.log(images); // Inspect the images object
             }
         };
         images[key].onerror = () => {
@@ -71,31 +64,20 @@ function loadImages() {
     }
 }
 
-// Input events
 window.addEventListener('keydown', e => keys[e.key] = true);
 window.addEventListener('keyup', e => keys[e.key] = false);
 
-// Collision check with terrain
 function canMove(newX, newY) {
     const col = Math.floor(newX / TILE_SIZE);
     const row = Math.floor(newY / TILE_SIZE);
 
-    console.log("canMove:", newX, newY, col, row); // Debugging
-
-    if (row < 0 || row >= MAP_ROWS || col < 0 || col >= MAP_COLS) {
-        console.log("Out of bounds!");
-        return false;
-    }
-
+    if (row < 0 || row >= MAP_ROWS || col < 0 || col >= MAP_COLS) return false;
     const tile = map[row][col];
-    console.log("Tile type:", tile); // Debugging
-
-    return tile === TERRAIN.GRASS || tile === TERRAIN.SAND; // walkable on grass and sand
+    return tile === TERRAIN.GRASS || tile === TERRAIN.SAND;
 }
 
-// Update player position
 function update() {
-    if (!imagesLoaded) return; // Don't update if images aren't loaded yet
+    if (!imagesLoaded) return;
 
     let newX = player.x;
     let newY = player.y;
@@ -105,15 +87,17 @@ function update() {
     if (keys['ArrowLeft']) newX -= player.speed;
     if (keys['ArrowRight']) newX += player.speed;
 
-    // Check hitboxes before moving
     if (canMove(newX, player.y)) player.x = newX;
     if (canMove(player.x, newY)) player.y = newY;
 
+    // Update editor panel values
+    document.getElementById('playerX').value = player.x;
+    document.getElementById('playerY').value = player.y;
+    document.getElementById('playerSpeed').value = player.speed;
 }
 
-// Draw map and player
 function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas each frame
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for (let row = 0; row < MAP_ROWS; row++) {
         for (let col = 0; col < MAP_COLS; col++) {
@@ -134,29 +118,72 @@ function draw() {
         }
     }
 
-    // Draw Player - No animation, just use the original player image
-    if (images['player']) { // Check if the player image is loaded before drawing
-        ctx.drawImage(images['player'], player.x, player.y, player.width, player.height);
-    } else {
-        console.log("Player image not loaded yet!");
-    }
+    ctx.drawImage(images['player'], player.x, player.y, player.width, player.height);
 }
 
-// Main loop
 function gameLoop() {
     update();
     draw();
     requestAnimationFrame(gameLoop);
 }
 
-// Start game
+// Editor Functions
+function initializeEditor() {
+    // Player Editor
+    document.getElementById('playerX').value = player.x;
+    document.getElementById('playerY').value = player.y;
+    document.getElementById('playerSpeed').value = player.speed;
+
+    document.getElementById('playerX').addEventListener('change', () => {
+        player.x = parseInt(document.getElementById('playerX').value);
+    });
+    document.getElementById('playerY').addEventListener('change', () => {
+        player.y = parseInt(document.getElementById('playerY').value);
+    });
+    document.getElementById('playerSpeed').addEventListener('change', () => {
+        player.speed = parseInt(document.getElementById('playerSpeed').value);
+    });
+
+    // Map Editor - Create Terrain Buttons
+    const terrainButtonsDiv = document.getElementById('terrainButtons');
+    for (const terrainName in TERRAIN) {
+        const terrainValue = TERRAIN[terrainName];
+        const button = document.createElement('button');
+        button.textContent = terrainValue;
+        button.classList.add('terrain-' + terrainValue); // Add class for styling
+        button.addEventListener('click', () => setSelectedTerrain(terrainValue));
+        terrainButtonsDiv.appendChild(button);
+    }
+
+    canvas.addEventListener('click', handleCanvasClick);
+}
+
+let selectedTerrain = 0; // Default to GRASS
+
+function setSelectedTerrain(terrain) {
+    selectedTerrain = terrain;
+    console.log("Selected terrain: " + selectedTerrain);
+}
+
+function handleCanvasClick(event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const col = Math.floor(x / TILE_SIZE);
+    const row = Math.floor(y / TILE_SIZE);
+
+    if (row >= 0 && row < MAP_ROWS && col >= 0 && col < MAP_COLS) {
+        map[row][col] = selectedTerrain;
+        console.log(`Changed tile at row ${row}, col ${col} to terrain ${selectedTerrain}`);
+    }
+}
+
 loadImages();
 
-// Wait for images to load before starting the game loop (moved inside loadImages success callback)
 let startCheckImagesLoaded = setInterval(() => {
     if (imagesLoaded) {
         clearInterval(startCheckImagesLoaded);
         gameLoop();
-        console.log("Game loop started!"); // Debugging
     }
 }, 100);

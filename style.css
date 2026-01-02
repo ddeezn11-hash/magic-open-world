@@ -1,10 +1,57 @@
 body {
-  text-align: center;
-  font-family: sans-serif;
-  background-color: #f0f0f0;
+    margin: 0;
+    font-family: sans-serif;
 }
 
-canvas {
-  border: 2px solid black;
-  background-color: #ffffff;
+#gameCanvas {
+    background: #eee;
 }
+
+#editorPanel {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    border: 1px solid #ccc;
+    z-index: 1000; /* Ensure it's on top of the canvas */
+}
+
+#editorPanel label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+#editorPanel input[type="number"] {
+    width: 60px;
+}
+
+#mapEditor {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    border: 1px solid #ccc;
+    z-index: 1000;
+    max-height: 400px; /* Limit height for scrollability */
+    overflow-y: auto; /* Enable vertical scroll if content overflows */
+}
+
+#mapEditor button {
+    width: 30px;
+    height: 30px;
+    margin: 2px;
+    font-size: 16px;
+    text-align: center;
+    line-height: 30px; /* Vertically center the text */
+    border: none;
+    cursor: pointer;
+}
+
+/* Style buttons for each terrain type */
+.terrain-0 { background-color: lightgreen; } /* GRASS */
+.terrain-1 { background-color: lightblue; }  /* WATER */
+.terrain-2 { background-color: darkgreen; }  /* TREE */
+.terrain-3 { background-color: sandybrown; } /* SAND */
+.terrain-4 { background-color: gray; }       /* MOUNTAIN */
