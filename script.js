@@ -29,10 +29,126 @@ let map = [
 ];
 
 let player = { x: 0, y: 0, width: TILE_SIZE, height: TILE_SIZE, speed: 5 };
+let players = {}; // Other players
+let socket = null;
+let playerId = null;
+let isConnected = false;
 
 const keys = {};
 const images = {};
 let imagesLoaded = false;
+
+// Initialize Socket.io connection
+function initializeSocket() {
+    socket = io();
+
+    socket.on('connect', () => {
+        console.log('Connected to server');
+        isConnected = true;
+        updateConnectionStatus(true);
+        playerId = socket.id;
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Disconnected from server');
+        isConnected = false;
+        updateConnectionStatus(false);
+        players = {};
+    });
+
+    // Receive initial game state
+    socket.on('game-state', (state) => {
+        map = state.map;
+        console.log('Received game state');
+    });
+
+    // Receive list of all connected players
+    socket.on('players-list', (playersList) => {
+        players = playersList;
+        delete players[playerId]; // Remove self from list
+        updatePlayersList();
+        console.log('Received players list:', Object.keys(players).length, 'other players');
+    });
+
+    // Handle new player joining
+    socket.on('player-joined', (newPlayer) => {
+        if (newPlayer.id !== playerId) {
+            players[newPlayer.id] = newPlayer;
+            updatePlayersList();
+            console.log('New player joined:', newPlayer.id);
+        }
+    });
+
+    // Handle player movement
+    socket.on('player-moved', (data) => {
+        if (players[data.id]) {
+            players[data.id].x = data.x;
+            players[data.id].y = data.y;
+        }
+    });
+
+    // Handle player updates
+    socket.on('player-updated', (data) => {
+        if (players[data.id]) {
+            Object.assign(players[data.id], data);
+        }
+    });
+
+    // Handle player disconnect
+    socket.on('player-left', (playerId) => {
+        delete players[playerId];
+        updatePlayersList();
+        console.log('Player left:', playerId);
+    });
+
+    // Handle map changes
+    socket.on('map-changed', (data) => {
+        const { row, col, terrain } = data;
+        map[row][col] = terrain;
+    });
+}
+
+function updateConnectionStatus(connected) {
+    const statusElement = document.getElementById('statusText');
+    const statusContainer = document.getElementById('connectionStatus');
+    if (connected) {
+        statusElement.textContent = 'Connected';
+        statusContainer.classList.remove('disconnected');
+    } else {
+        statusElement.textContent = 'Disconnected';
+        statusContainer.classList.add('disconnected');
+    }
+    updatePlayerCount();
+}
+
+function updatePlayerCount() {
+    const count = Object.keys(players).length + 1; // +1 for self
+    document.getElementById('playerCount').textContent = `Players: ${count}`;
+}
+
+function updatePlayersList() {
+    const playersList = document.getElementById('playersList');
+    playersList.innerHTML = '';
+
+    // Add self
+    const selfItem = document.createElement('div');
+    selfItem.className = 'player-item';
+    selfItem.style.borderLeftColor = 'blue';
+    selfItem.innerHTML = `<div class="player-name">You (${playerId ? playerId.substring(0, 6) : '?'})</div><div class="player-position">X: ${Math.round(player.x)}, Y: ${Math.round(player.y)}</div>`;
+    playersList.appendChild(selfItem);
+
+    // Add other players
+    for (const id in players) {
+        const p = players[id];
+        const item = document.createElement('div');
+        item.className = 'player-item';
+        item.style.borderLeftColor = p.color || 'gray';
+        item.innerHTML = `<div class="player-name">${id.substring(0, 6)}</div><div class="player-position">X: ${Math.round(p.x)}, Y: ${Math.round(p.y)}</div>`;
+        playersList.appendChild(item);
+    }
+
+    updatePlayerCount();
+}
 
 function loadImages() {
     const imageSources = {
@@ -82,6 +198,9 @@ function canMove(newX, newY) {
     return tile === TERRAIN.GRASS || tile === TERRAIN.SAND;
 }
 
+let lastSyncTime = 0;
+const SYNC_INTERVAL = 100; // Send position updates every 100ms
+
 function update() {
     if (!imagesLoaded) return;
 
@@ -93,16 +212,34 @@ function update() {
     if (keys['ArrowLeft']) newX -= player.speed;
     if (keys['ArrowRight']) newX += player.speed;
 
-    if (canMove(newX, player.y)) player.x = newX;
-    if (canMove(player.x, newY)) player.y = newY;
-
-    if (document.activeElement.id !== 'playerX' && document.activeElement.id !== 'playerY' && document.activeElement.id !== 'playerSpeed') {
-        document.getElementById('playerX').value = player.x;
-        document.getElementById('playerY').value = player.y;
-        document.getElementById('playerSpeed').value = player.speed;
-    } else {
-        console.log("Skipping editor update because an input field has focus.");
+    let moved = false;
+    if (canMove(newX, player.y)) {
+        player.x = newX;
+        moved = true;
     }
+    if (canMove(player.x, newY)) {
+        player.y = newY;
+        moved = true;
+    }
+
+    // Send position to server
+    if (moved && isConnected && socket) {
+        const now = Date.now();
+        if (now - lastSyncTime > SYNC_INTERVAL) {
+            socket.emit('player-move', { x: player.x, y: player.y });
+            lastSyncTime = now;
+        }
+    }
+
+    // Update UI (only if not focused on input)
+    if (document.activeElement.id !== 'playerX' && document.activeElement.id !== 'playerY' && document.activeElement.id !== 'playerSpeed') {
+        document.getElementById('playerX').value = Math.round(player.x);
+        document.getElementById('playerY').value = Math.round(player.y);
+        document.getElementById('playerSpeed').value = player.speed;
+    }
+
+    // Update player list
+    updatePlayersList();
 
     console.log("Player x:", player.x, "Player y:", player.y, "Player speed:", player.speed);
 }
@@ -110,6 +247,7 @@ function update() {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Draw map
     for (let row = 0; row < MAP_ROWS; row++) {
         for (let col = 0; col < MAP_COLS; col++) {
             const tile = map[row][col];
@@ -129,7 +267,21 @@ function draw() {
         }
     }
 
-    ctx.drawImage(images['player'], player.x, player.y, player.width, player.height);
+    // Draw other players
+    for (const id in players) {
+        const p = players[id];
+        ctx.fillStyle = p.color || 'gray';
+        ctx.fillRect(p.x, p.y, p.width, p.height);
+        // Draw player label
+        ctx.fillStyle = 'black';
+        ctx.font = '12px Arial';
+        ctx.fillText(id.substring(0, 6), p.x + 5, p.y + TILE_SIZE + 12);
+    }
+
+    // Draw self
+    if (images['player']) {
+        ctx.drawImage(images['player'], player.x, player.y, player.width, player.height);
+    }
 }
 
 function gameLoop() {
@@ -140,16 +292,10 @@ function gameLoop() {
 
 function initializeEditor() {
     // Player Editor
-    document.getElementById('playerX').value = player.x;
-    document.getElementById('playerY').value = player.y;
+    document.getElementById('playerX').value = Math.round(player.x);
+    document.getElementById('playerY').value = Math.round(player.y);
     document.getElementById('playerSpeed').value = player.speed;
 
-    document.getElementById('playerX').addEventListener('change', () => {
-        player.x = parseInt(document.getElementById('playerX').value);
-    });
-    document.getElementById('playerY').addEventListener('change', () => {
-        player.y = parseInt(document.getElementById('playerY').value);
-    });
     document.getElementById('playerSpeed').addEventListener('change', () => {
         player.speed = parseInt(document.getElementById('playerSpeed').value);
     });
@@ -195,6 +341,10 @@ function handleCanvasClick(event) {
 
     if (row >= 0 && row < MAP_ROWS && col >= 0 && col < MAP_COLS) {
         map[row][col] = selectedTerrain;
+        // Broadcast map change to server
+        if (isConnected && socket) {
+            socket.emit('map-edit', { row, col, terrain: selectedTerrain });
+        }
         console.log(`Changed tile at row ${row}, col ${col} to terrain ${selectedTerrain}`);
     }
 }
@@ -259,6 +409,9 @@ function makeDraggable(element) {
 }
 
 loadImages();
+
+// Initialize Socket.io
+initializeSocket();
 
 let startCheckImagesLoaded = setInterval(() => {
     if (imagesLoaded) {

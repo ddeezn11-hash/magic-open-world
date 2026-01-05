@@ -1,20 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tile Map Editor - Multiplayer</title>
+    <title>Magic Open World - Multiplayer</title>
     <link rel="stylesheet" href="style.css">
     <script src="/socket.io/socket.io.js"></script> <!-- Include Socket.IO client library -->
 </head>
 <body>
+    <div id="connectionStatus">
+        <span id="statusText">Connecting...</span>
+        <span id="playerCount">Players: 0</span>
+    </div>
+
     <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <div id="playersPanel">
+        <h3>Connected Players</h3>
+        <div id="playersList">
+            <!-- Players will be listed here -->
+        </div>
+    </div>
 
     <div id="editorPanel">
         <div id="editorPanelHeader">
             <h2>Editor Panel</h2>
         </div>
         <h2>Player Editor</h2>
-        <label>X: <input type="number" id="playerX"></label>
-        <label>Y: <input type="number" id="playerY"></label>
+        <label>X: <input type="number" id="playerX" readonly></label>
+        <label>Y: <input type="number" id="playerY" readonly></label>
         <label>Speed: <input type="number" id="playerSpeed"></label>
 
         <button id="saveButton">Save Map</button>
@@ -27,6 +39,13 @@
         <div id="terrainButtons">
             <!-- Terrain buttons will be added here by JavaScript -->
         </div>
+    </div>
+
+    <div id="instructions">
+        <h3>Controls</h3>
+        <p>Arrow Keys: Move</p>
+        <p>Click Tiles: Edit Map</p>
+        <p>.: Toggle Editor</p>
     </div>
 
     <script src="script.js"></script>
