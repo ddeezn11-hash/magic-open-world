@@ -65,22 +65,24 @@ body {
     font-size: 11px;
 }
 
+/* ----- FIXED LEFT EDITOR PANEL ----- */
 #editorPanel {
-    position: absolute;
+    position: fixed;     /* forces fixed position */
     top: 10px;
-    left: 10px;
-    background: rgba(255, 255, 255, 0.8);
+    left: 10px;          /* always left */
+    background: rgba(255, 255, 255, 0.85);
     padding: 10px;
     border: 1px solid #ccc;
-    z-index: 1000;
+    z-index: 2000;       /* ensure visibility */
+    width: 220px;        /* optional width */
 }
 
 #editorPanelHeader {
     background-color: #2196F3;
     color: #fff;
-    cursor: move;
+    cursor: default; /* not draggable anymore */
     padding: 10px;
-    margin: -10px -10px 0 -10px; /* Adjust to fit panel padding */
+    margin: -10px -10px 0 -10px;
 }
 
 #editorPanel label {
@@ -115,11 +117,11 @@ body {
     cursor: pointer;
 }
 
-.terrain-0 { background-color: lightgreen; } /* GRASS */
-.terrain-1 { background-color: lightblue; }  /* WATER */
-.terrain-2 { background-color: darkgreen; }  /* TREE */
-.terrain-3 { background-color: sandybrown; } /* SAND */
-.terrain-4 { background-color: gray; }       /* MOUNTAIN */
+.terrain-0 { background-color: lightgreen; }
+.terrain-1 { background-color: lightblue; }
+.terrain-2 { background-color: darkgreen; }
+.terrain-3 { background-color: sandybrown; }
+.terrain-4 { background-color: gray; }
 
 #instructions {
     position: absolute;
